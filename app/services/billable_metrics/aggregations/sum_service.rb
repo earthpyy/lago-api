@@ -28,6 +28,13 @@ module BillableMetrics
         result.service_failure!(code: 'aggregation_failure', message: e.message)
       end
 
+      def compute_pre_aggregation
+        aggregation = event_store.pre_aggregated_sum
+        result.aggregation = aggregation
+        result.count = event_store.pre_aggregated_count
+        result
+      end
+
       # NOTE: Apply the grouped_by filter to the aggregation
       #       Result will have an aggregations attribute
       #       containing the aggregation result of each group.

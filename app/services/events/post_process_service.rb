@@ -24,8 +24,7 @@ module Events
       event.save!
 
       expire_cached_charges(subscriptions)
-
-      handle_pay_in_advance
+      pre_aggregate_event unless handle_pay_in_advance
 
       result.event = event
       result
@@ -91,13 +90,14 @@ module Events
     end
 
     def handle_pay_in_advance
-      return unless billable_metric
-      return unless charges.any?
+      return false unless billable_metric
+      return false unless in_advance_charges.any?
 
       Events::PayInAdvanceJob.perform_later(Events::CommonFactory.new_instance(source: event).as_json)
+      true
     end
 
-    def charges
+    def in_advance_charges
       return Charge.none unless subscriptions.first
 
       subscriptions
@@ -109,8 +109,38 @@ module Events
         .where(billable_metric: {code: event.code})
     end
 
+    def applicable_charges
+    end
+
     def deliver_error_webhook(error:)
       SendWebhookJob.perform_later('event.error', event, {error:})
+    end
+
+    def pre_aggregate_event
+      return if billable_metric.recurring?
+      return unless billable_metric.sum_agg?
+
+      # SUM aggregation
+      aggregation_property = billable_metric.field_name
+      return unless event.properties.key?(aggregation_property)
+
+      pre_aggregation = PreAggregation.find_or_create_by(
+        organization_id: event.organization_id,
+        external_subscription_id: event.external_subscription_id,
+        code: event.code,
+        filters: event.properties.except(aggregation_property),
+        timestamp: event.timestamp.utc.beginning_of_hour
+      )
+
+      event_value = BigDecimal(event.properties[aggregation_property])
+
+      pre_aggregation.with_lock do
+        pre_aggregated_value = BigDecimal(pre_aggregation.aggregated_value)
+        pre_aggregation.update!(
+          aggregated_value: pre_aggregated_value + event_value,
+          units: pre_aggregation.units + 1
+        )
+      end
     end
   end
 end

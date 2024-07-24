@@ -24,7 +24,8 @@ module BillableMetrics
         if grouped_by.present?
           compute_grouped_by_aggregation(options:)
         else
-          compute_aggregation(options:)
+          #compute_aggregation(options:)
+          compute_pre_aggregation
         end
       end
 

@@ -21,6 +21,19 @@ module Events
         filters_scope(scope)
       end
 
+      def pre_aggregations
+        scope = PreAggregation.where(
+          external_subscription_id: subscription.external_id,
+          organization_id: subscription.organization.id,
+          code: code
+        )
+
+        scope = scope.where('timestamp >= ?', from_datetime) if use_from_boundary
+        scope = scope.where('timestamp <= ?', to_datetime) if to_datetime
+
+        scope
+      end
+
       def events_values(limit: nil, force_from: false)
         field_name = sanitized_property_name
         field_name = "(#{field_name})::numeric" if numeric_property
@@ -190,6 +203,14 @@ module Events
 
       def sum
         events.sum("(#{sanitized_property_name})::numeric")
+      end
+
+      def pre_aggregated_sum
+        pre_aggregations.sum(:aggregated_value)
+      end
+
+      def pre_aggregated_count
+        pre_aggregations.sum(:units)
       end
 
       def grouped_sum
