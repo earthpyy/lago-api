@@ -3,35 +3,238 @@
 require 'rails_helper'
 
 RSpec.describe Fees::CreatePayInAdvanceService, type: :service do
-  subject(:fee_service) { described_class.new(charge:, event:, billing_at: event.timestamp, estimate:) }
+  subject(:fee_service) {
+    described_class.new(charge:, event:, billing_at: event.timestamp, estimate:)
+  }
 
   let(:organization) { create(:organization) }
-  let(:billable_metric) { create(:billable_metric, organization:) }
+
+  let(:billable_metric) {
+    create(:sum_billable_metric, organization:, field_name: 'units')
+  }
+
   let(:customer) { create(:customer, organization:) }
-  let(:plan) { create(:plan, organization:) }
-  let(:subscription) { create(:subscription, customer:, plan:) }
-  let(:tax) { create(:tax, organization:, rate: 20) }
+
+  let(:plan_1) { create(:plan, organization:, amount_cents: 0) }
+  let(:plan_2) { create(:plan, organization:, amount_cents: 0) }
+  let(:plan_3) { create(:plan, organization:, amount_cents: 0) }
+  let(:plan_4) { create(:plan, organization:, amount_cents: 0) }
+
+  let(:subscription_external_id) { SecureRandom.uuid }
+
+  let(:subscription_1) {
+    create(
+      :subscription,
+      :terminated,
+      customer:,
+      plan: plan_1,
+      terminated_at: Time.parse("2024-08-01T12:40:02Z"),
+      started_at: Time.parse("2024-08-01T09:26:08Z"),
+      billing_time: "calendar",
+      subscription_at: Time.parse("2024-08-01T09:26:08Z"),
+      external_id: subscription_external_id,
+      previous_subscription: nil,
+    )
+  }
+
+  let(:subscription_2) {
+    create(
+      :subscription,
+      :terminated,
+      customer:,
+      plan: plan_2,
+      terminated_at: Time.parse("2024-08-02T13:13:01Z"),
+      started_at: Time.parse("2024-08-02T12:55:41Z"),
+      billing_time: "calendar",
+      subscription_at: Time.parse("2024-08-01T09:26:08Z"),
+      external_id: subscription_external_id,
+      previous_subscription: subscription_1
+    )
+  }
+
+  let(:subscription_3) {
+    create(
+      :subscription,
+      :terminated,
+      customer:,
+      plan: plan_3,
+      terminated_at: Time.parse("2024-08-02T12:55:41Z"),
+      started_at: Time.parse("2024-08-02T12:40:02Z"),
+      billing_time: "calendar",
+      subscription_at: Time.parse("2024-08-01T09:26:08Z"),
+      external_id: subscription_external_id,
+      previous_subscription: subscription_2
+    )
+  }
+
+  let(:subscription_4) {
+    create(
+      :subscription,
+      :active,
+      customer:,
+      plan: plan_4,
+      terminated_at: nil,
+      started_at: Time.parse("2024-08-02T13:13:01Z"),
+      billing_time: "calendar",
+      subscription_at: Time.parse("2024-08-01T09:26:08Z"),
+      external_id: subscription_external_id,
+      previous_subscription: subscription_2
+    )
+  }
+
+  let(:tax) { create(:tax, organization:, rate: 0.0, applied_to_organization: false) }
 
   let(:charge_filter) { nil }
 
-  let(:charge) { create(:standard_charge, :pay_in_advance, billable_metric:, plan:) }
+  let(:charge) {
+    create(
+      :percentage_charge,
+      :pay_in_advance,
+      billable_metric:,
+      plan: plan_3,
+      amount_currency: nil,
+      properties: {
+        "rate"=>"10",
+        "fixed_amount"=>"0",
+        "per_transaction_max_amount"=>"100",
+        "per_transaction_min_amount" => nil
+      },
+      min_amount_cents: 0,
+      invoiceable: false,
+      prorated: false,
+      regroup_paid_fees: "invoice"
+    )
+  }
+
   let(:estimate) { false }
 
-  let(:event) do
+  let(:event_1) do
     Events::CommonFactory.new_instance(
       source: create(
         :event,
-        external_subscription_id: subscription.external_id,
+        external_subscription_id: subscription_external_id,
         external_customer_id: customer.external_id,
         organization_id: organization.id,
-        properties: event_properties
+        properties: {"units"=>"345"},
+        timestamp: Time.parse("2024-08-15T22:00:00Z")
+      )
+    )
+  end
+
+  let(:event_2) do
+    Events::CommonFactory.new_instance(
+      source: create(
+        :event,
+        external_subscription_id: subscription_external_id,
+        external_customer_id: customer.external_id,
+        organization_id: organization.id,
+        properties: {"units"=>"1235"},
+        timestamp: Time.parse("2024-08-15T22:00:00Z")
+      )
+    )
+  end
+
+  let(:event_3) do
+    Events::CommonFactory.new_instance(
+      source: create(
+        :event,
+        external_subscription_id: subscription_external_id,
+        external_customer_id: customer.external_id,
+        organization_id: organization.id,
+        properties: {"units"=>"455"},
+        timestamp: Time.parse("2024-08-02T12:42:40Z")
+      )
+    )
+  end
+
+  let(:event_4) do
+    Events::CommonFactory.new_instance(
+      source: create(
+        :event,
+        external_subscription_id: subscription_external_id,
+        external_customer_id: customer.external_id,
+        organization_id: organization.id,
+        properties: {"units"=>"1235"},
+        timestamp: Time.parse("2024-08-02T12:42:35Z")
+      )
+    )
+  end
+
+  let(:event_5) do
+    Events::CommonFactory.new_instance(
+      source: create(
+        :event,
+        external_subscription_id: subscription_external_id,
+        external_customer_id: customer.external_id,
+        organization_id: organization.id,
+        properties: {"units"=>"125"},
+        timestamp: Time.parse("2024-08-02T13:09:04Z")
+      )
+    )
+  end
+
+  let(:event_6) do
+    Events::CommonFactory.new_instance(
+      source: create(
+        :event,
+        external_subscription_id: subscription_external_id,
+        external_customer_id: customer.external_id,
+        organization_id: organization.id,
+        properties: {"units"=>"2250"},
+        timestamp: Time.parse("2024-08-02T13:16:58Z")
+      )
+    )
+  end
+
+  let(:event_7) do
+    Events::CommonFactory.new_instance(
+      source: create(
+        :event,
+        external_subscription_id: subscription_external_id,
+        external_customer_id: customer.external_id,
+        organization_id: organization.id,
+        properties: {"units"=>"225"},
+        timestamp: Time.parse("2024-08-02T13:16:53Z")
+      )
+    )
+  end
+
+  let(:event_8) do
+    Events::CommonFactory.new_instance(
+      source: create(
+        :event,
+        external_subscription_id: subscription_external_id,
+        external_customer_id: customer.external_id,
+        organization_id: organization.id,
+        properties: {"units"=>"150"},
+        timestamp: Time.parse("2024-08-06T15:01:49Z")
       )
     )
   end
 
   let(:event_properties) { {} }
 
-  before { tax }
+  let(:event) { event_1 }
+
+  before do
+    tax
+
+    subscription_1
+    subscription_2
+    subscription_3
+    subscription_4
+
+    event_1
+    event_2
+    event_3
+    event_4
+
+    # these events where not created in prod DB when the invoice fee was calculated.
+    #event_5
+    #event_6
+    #event_7
+    #event_8
+  end
 
   describe '#call' do
     let(:aggregation_result) do
@@ -52,17 +255,22 @@ RSpec.describe Fees::CreatePayInAdvanceService, type: :service do
     end
 
     before do
-      allow(Charges::PayInAdvanceAggregationService).to receive(:call)
-        .with(charge:, boundaries: Hash, properties: Hash, event:, charge_filter:)
-        .and_return(aggregation_result)
+      #allow(Charges::PayInAdvanceAggregationService).to receive(:call)
+      #  .with(charge:, boundaries: Hash, properties: Hash, event:, charge_filter:)
+      #  .and_return(aggregation_result)
 
-      allow(Charges::ApplyPayInAdvanceChargeModelService).to receive(:call)
-        .with(charge:, aggregation_result:, properties: Hash)
-        .and_return(charge_result)
+      #allow(Charges::ApplyPayInAdvanceChargeModelService).to receive(:call)
+      #  .with(charge:, aggregation_result:, properties: Hash)
+      #  .and_return(charge_result)
     end
 
     it 'creates a fee' do
-      result = fee_service.call
+      result_1 = described_class.new(charge:, event: event_1, billing_at: event_1.timestamp, estimate:).call
+      result_2 = described_class.new(charge:, event: event_2, billing_at: event_2.timestamp, estimate:).call
+      result_3 = described_class.new(charge:, event: event_3, billing_at: event_3.timestamp, estimate:).call
+      result_4 = described_class.new(charge:, event: event_4, billing_at: event_4.timestamp, estimate:).call
+
+      binding.break
 
       aggregate_failures do
         expect(result).to be_success
