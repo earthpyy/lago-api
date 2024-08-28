@@ -11,12 +11,12 @@ module Mutations
       graphql_name 'RetryAllInvoices'
       description 'Retry all failed invoices'
 
-      type Types::Invoices::Object.collection_type
+      type Integer
 
       def resolve
         result = ::Invoices::RetryBatchService.new(organization: current_organization).call_async
 
-        result.success? ? result.invoices : result_error(result)
+        result.success? ? result.invoices.count : result_error(result)
       end
     end
   end

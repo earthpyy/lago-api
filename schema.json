@@ -23099,8 +23099,8 @@
               "name": "retryAllInvoices",
               "description": "Retry all failed invoices",
               "type": {
-                "kind": "OBJECT",
-                "name": "InvoiceCollection",
+                "kind": "SCALAR",
+                "name": "Int",
                 "ofType": null
               },
               "isDeprecated": false,

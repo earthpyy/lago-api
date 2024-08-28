@@ -4974,7 +4974,7 @@ type Mutation {
     Parameters for RetryAllInvoices
     """
     input: RetryAllInvoicesInput!
-  ): InvoiceCollection
+  ): Int
 
   """
   Retry failed invoice
