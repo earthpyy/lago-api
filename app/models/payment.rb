@@ -15,7 +15,7 @@ class Payment < ApplicationRecord
   def should_sync_payment?
     return false unless payable.is_a?(Invoice)
 
-    payable.finalized? && customer.integration_customers.accounting_kind.any? { |c| c.integration.sync_payments }
+    payable.finalized? & customer.accounting_customer&.integration&.sync_payments
   end
 end
 
