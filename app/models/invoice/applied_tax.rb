@@ -43,9 +43,9 @@ end
 #
 # Indexes
 #
-#  index_invoices_taxes_on_invoice_id             (invoice_id)
-#  index_invoices_taxes_on_invoice_id_and_tax_id  (invoice_id,tax_id) UNIQUE WHERE ((tax_id IS NOT NULL) AND (created_at >= '2023-09-12 00:00:00'::timestamp without time zone))
-#  index_invoices_taxes_on_tax_id                 (tax_id)
+#  index_invoices_taxes_on_invoice_id               (invoice_id)
+#  index_invoices_taxes_on_invoice_id_and_tax_code  (invoice_id,tax_code) UNIQUE WHERE (created_at >= '2023-09-12 00:00:00'::timestamp without time zone)
+#  index_invoices_taxes_on_tax_id                   (tax_id)
 #
 # Foreign Keys
 #

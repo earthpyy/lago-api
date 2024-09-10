@@ -30,9 +30,9 @@ end
 #
 # Indexes
 #
-#  index_fees_taxes_on_fee_id             (fee_id)
-#  index_fees_taxes_on_fee_id_and_tax_id  (fee_id,tax_id) UNIQUE WHERE ((tax_id IS NOT NULL) AND (created_at >= '2023-09-12 00:00:00'::timestamp without time zone))
-#  index_fees_taxes_on_tax_id             (tax_id)
+#  index_fees_taxes_on_fee_id               (fee_id)
+#  index_fees_taxes_on_fee_id_and_tax_code  (fee_id,tax_code) UNIQUE WHERE (created_at >= '2023-09-12 00:00:00'::timestamp without time zone)
+#  index_fees_taxes_on_tax_id               (tax_id)
 #
 # Foreign Keys
 #
