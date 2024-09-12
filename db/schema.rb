@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_09_10_111203) do
+ActiveRecord::Schema[7.1].define(version: 2024_09_12_083829) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -775,6 +775,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_09_10_111203) do
     t.boolean "payment_overdue", default: false
     t.bigint "negative_amount_cents", default: 0, null: false
     t.bigint "progressive_billing_credit_amount_cents", default: 0, null: false
+    t.jsonb "logs"
     t.index ["customer_id", "sequential_id"], name: "index_invoices_on_customer_id_and_sequential_id", unique: true
     t.index ["customer_id"], name: "index_invoices_on_customer_id"
     t.index ["number"], name: "index_invoices_on_number"

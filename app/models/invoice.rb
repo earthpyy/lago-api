@@ -425,6 +425,7 @@ end
 #  file                                    :string
 #  invoice_type                            :integer          default("subscription"), not null
 #  issuing_date                            :date
+#  logs                                    :jsonb
 #  net_payment_term                        :integer          default(0), not null
 #  number                                  :string           default(""), not null
 #  payment_attempts                        :integer          default(0), not null
