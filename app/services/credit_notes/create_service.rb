@@ -64,6 +64,8 @@ module CreditNotes
         if credit_note.should_sync_credit_note?
           Integrations::Aggregator::CreditNotes::CreateJob.perform_later(credit_note:)
         end
+
+        CreditNotes::ProviderTaxes::ReportJob.perform_later(credit_note:)
       end
 
       result

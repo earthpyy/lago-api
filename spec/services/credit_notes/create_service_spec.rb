@@ -131,6 +131,12 @@ RSpec.describe CreditNotes::CreateService, type: :service do
       end.to have_enqueued_job(SendEmailJob)
     end
 
+    it 'sync with tax provider' do
+      expect do
+        create_service.call
+      end.to have_enqueued_job(CreditNotes::ProviderTaxes::ReportJob)
+    end
+
     it_behaves_like 'syncs credit note' do
       let(:service_call) { create_service.call }
     end
