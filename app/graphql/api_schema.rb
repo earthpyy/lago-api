@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-class LagoApiSchema < GraphQL::Schema
-  mutation(Types::MutationType)
-  query(Types::QueryType)
+class ApiSchema < GraphQL::Schema
+  mutation(Types::ApiMutationType)
+  query(Types::ApiQueryType)
 
   # For batch-loading (see https://graphql-ruby.org/dataloader/overview.html)
   use GraphQL::Dataloader
