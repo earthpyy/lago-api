@@ -13,7 +13,7 @@ module LagoUtils
       http_client = LagoHttpClient::Client.new("#{url}/verify/#{ENV["LAGO_LICENSE"]}")
       response = http_client.get
 
-      @premium = response['valid']
+      @premium = false #response['valid']
     end
 
     def premium?
